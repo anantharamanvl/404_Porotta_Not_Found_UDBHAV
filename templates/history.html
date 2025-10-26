@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PhishGuard — History</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container">
+        <h1>History</h1>
+        <a class="btn" href="{{ url_for('index') }}">Back to Dashboard</a>
+      </div>
+    </header>
+
+    <main class="container">
+      {% if emails %} {% for email in emails %}
+      <article
+        class="email-card {% if email.detected.verdict=='phishing' %}phish{% else %}benign{% endif %}"
+      >
+        <div class="card-head">
+          <div class="from">{{ email.from }}</div>
+          <div class="meta">
+            <span class="subject">{{ email.subject }}</span>
+            <span class="time">{{ email.created_at }}</span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <pre>{{ email.body }}</pre>
+          <div class="link">
+            <strong>Link:</strong>
+            <a href="{{ email.link }}" target="_blank">{{ email.link }}</a>
+          </div>
+        </div>
+
+        <div class="card-foot">
+          <div class="detected">
+            <span
+              class="badge {% if email.detected.verdict=='phishing' %}danger{% else %}success{% endif %}"
+            >
+              {{ email.detected.verdict | upper }}
+            </span>
+            <span class="small">score {{ email.detected.score }}</span>
+          </div>
+          <div class="reasons small">
+            {{ email.detected.reasons | join(', ') }}
+          </div>
+          <div class="card-actions">
+            <a class="btn small" href="/download_email/{{ loop.index0 }}"
+              >Download .eml</a
+            >
+          </div>
+        </div>
+      </article>
+      {% endfor %} {% else %}
+      <div class="empty">No previous emails.</div>
+      {% endif %}
+    </main>
+
+    <footer class="footer">
+      <div class="container muted">
+        PhishGuard — demo built for hackathon • Generated for awareness only
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

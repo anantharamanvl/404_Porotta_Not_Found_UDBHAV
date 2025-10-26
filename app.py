@@ -1,9 +1,10 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
 from generator import generate_email
 from detector import detect
 import io, csv, json
 import datetime
+import os
 
 app = Flask(__name__)
 
@@ -15,8 +16,13 @@ def timestamp_now():
 
 @app.route("/")
 def index():
-    emails = list(reversed(EMAILS[-200:]))
-    return render_template("index.html", emails=emails)
+    latest_email = EMAILS[-1] if EMAILS else None
+    return render_template("index.html", email=latest_email, total=len(EMAILS))
+
+@app.route("/history")
+def history():
+    previous_emails = EMAILS[:-1] if len(EMAILS) > 1 else []
+    return render_template("history.html", emails=previous_emails)
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -25,10 +31,7 @@ def generate():
     result = detect(email)
     email_record = {
         **email,
-        **{
-            "detected": result,
-            "created_at": timestamp_now()
-        }
+        **{"detected": result, "created_at": timestamp_now()}
     }
     EMAILS.append(email_record)
     return redirect(url_for("index"))
@@ -50,7 +53,6 @@ def api_generate():
 def api_emails():
     return jsonify(list(reversed(EMAILS[-200:])))
 
-# Download full report (CSV or JSON)
 @app.route("/download_report")
 def download_report():
     fmt = request.args.get("format", "csv").lower()
@@ -89,15 +91,12 @@ def download_report():
         headers={"Content-Disposition": "attachment;filename=phishguard_report.csv"},
     )
 
-# Download a single email in simple .eml-like text format
 @app.route("/download_email/<int:index>")
 def download_email(index):
-    # index is the index in the reversed list shown on UI (0 is newest)
     emails = list(reversed(EMAILS[-200:]))
     if index < 0 or index >= len(emails):
         return ("Not found", 404)
     e = emails[index]
-    # Build a basic .eml text
     eml = []
     eml.append(f"From: {e.get('from','')}")
     eml.append(f"Subject: {e.get('subject','')}")
@@ -110,7 +109,6 @@ def download_email(index):
         mimetype="message/rfc822",
         headers={"Content-Disposition": f"attachment;filename=email_{index}.eml"},
     )
-import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

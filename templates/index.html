@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>PhishGuard — Demo</title>
+    <title>PhishGuard — Dashboard</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
@@ -16,7 +16,7 @@
         <div class="actions">
           <form
             id="gen-form"
-            action="/generate"
+            action="{{ url_for('generate') }}"
             method="post"
             class="inline-form"
           >
@@ -29,7 +29,6 @@
             </label>
             <button class="btn primary" type="submit">Generate</button>
           </form>
-
           <div class="download-group">
             <a class="btn" href="/download_report?format=csv">Download CSV</a>
             <a class="btn" href="/download_report?format=json">Download JSON</a>
@@ -42,7 +41,7 @@
       <section class="summary">
         <div class="summary-card">
           <h3>Emails generated</h3>
-          <p id="total-count">{{ emails|length }}</p>
+          <p id="total-count">{{ total }}</p>
           <p class="muted">Newest shown first</p>
         </div>
         <div class="summary-card">
@@ -56,27 +55,27 @@
       </section>
 
       <section id="emails" class="emails-grid">
-        {% if emails %} {% for e in emails %}
+        {% if email %}
         <article
-          class="email-card {% if e.detected.verdict=='phishing' %}phish{% else %}benign{% endif %}"
+          class="email-card {% if email.detected.verdict=='phishing' %}phish{% else %}benign{% endif %}"
         >
           <div class="card-head">
-            <div class="from">{{ e["from"] }}</div>
+            <div class="from">{{ email.from }}</div>
             <div class="meta">
-              <span class="subject">{{ e["subject"] }}</span>
-              <span class="time">{{ e["created_at"] or "" }}</span>
+              <span class="subject">{{ email.subject }}</span>
+              <span class="time">{{ email.created_at or "" }}</span>
             </div>
           </div>
 
           <div class="card-body">
-            <pre class="body">{{ e["body"] }}</pre>
+            <pre class="body">{{ email.body }}</pre>
             <div class="link">
               <strong>Link:</strong>
               <a
-                href="{{ e['link'] }}"
+                href="{{ email.link }}"
                 target="_blank"
                 rel="noreferrer noopener"
-                >{{ e["link"] }}</a
+                >{{ email.link }}</a
               >
             </div>
           </div>
@@ -84,26 +83,28 @@
           <div class="card-foot">
             <div class="detected">
               <span
-                class="badge {% if e.detected.verdict=='phishing' %}danger{% else %}success{% endif %}"
-                >{{ e.detected.verdict | upper }}</span
+                class="badge {% if email.detected.verdict=='phishing' %}danger{% else %}success{% endif %}"
               >
-              <span class="small">score {{ e.detected.score }}</span>
+                {{ email.detected.verdict | upper }}
+              </span>
+              <span class="small">score {{ email.detected.score }}</span>
             </div>
             <div class="reasons small">
-              {{ e.detected.reasons | join(', ') }}
+              {{ email.detected.reasons | join(', ') }}
             </div>
             <div class="card-actions">
-              <a class="btn small" href="/download_email/{{ loop.index0 }}"
-                >Download .eml</a
-              >
+              <a class="btn small" href="/download_email/0">Download .eml</a>
             </div>
           </div>
         </article>
-        {% endfor %} {% else %}
+        {% else %}
         <div class="empty">No emails yet — use the Generate button above.</div>
         {% endif %}
       </section>
     </main>
+
+    <!-- Bottom-left History button -->
+    <a href="{{ url_for('history') }}" class="btn history-btn">History</a>
 
     <footer class="footer">
       <div class="container muted">
