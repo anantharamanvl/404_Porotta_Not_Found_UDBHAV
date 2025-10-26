@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PhishGuard — Demo</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container">
+        <h1>PhishGuard <span class="tag">MVP</span></h1>
+        <div class="actions">
+          <form
+            id="gen-form"
+            action="/generate"
+            method="post"
+            class="inline-form"
+          >
+            <label class="radio">
+              <input type="radio" name="phishing" value="true" checked />
+              Phishing
+            </label>
+            <label class="radio">
+              <input type="radio" name="phishing" value="false" /> Benign
+            </label>
+            <button class="btn primary" type="submit">Generate</button>
+          </form>
+
+          <div class="download-group">
+            <a class="btn" href="/download_report?format=csv">Download CSV</a>
+            <a class="btn" href="/download_report?format=json">Download JSON</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="summary">
+        <div class="summary-card">
+          <h3>Emails generated</h3>
+          <p id="total-count">{{ emails|length }}</p>
+          <p class="muted">Newest shown first</p>
+        </div>
+        <div class="summary-card">
+          <h3>Quick tips</h3>
+          <ul class="muted">
+            <li>Look for suspicious links or IP addresses</li>
+            <li>Urgency + unknown sender = red flag</li>
+            <li>Use this for awareness demos only</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="emails" class="emails-grid">
+        {% if emails %} {% for e in emails %}
+        <article
+          class="email-card {% if e.detected.verdict=='phishing' %}phish{% else %}benign{% endif %}"
+        >
+          <div class="card-head">
+            <div class="from">{{ e["from"] }}</div>
+            <div class="meta">
+              <span class="subject">{{ e["subject"] }}</span>
+              <span class="time">{{ e["created_at"] or "" }}</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <pre class="body">{{ e["body"] }}</pre>
+            <div class="link">
+              <strong>Link:</strong>
+              <a
+                href="{{ e['link'] }}"
+                target="_blank"
+                rel="noreferrer noopener"
+                >{{ e["link"] }}</a
+              >
+            </div>
+          </div>
+
+          <div class="card-foot">
+            <div class="detected">
+              <span
+                class="badge {% if e.detected.verdict=='phishing' %}danger{% else %}success{% endif %}"
+                >{{ e.detected.verdict | upper }}</span
+              >
+              <span class="small">score {{ e.detected.score }}</span>
+            </div>
+            <div class="reasons small">
+              {{ e.detected.reasons | join(', ') }}
+            </div>
+            <div class="card-actions">
+              <a class="btn small" href="/download_email/{{ loop.index0 }}"
+                >Download .eml</a
+              >
+            </div>
+          </div>
+        </article>
+        {% endfor %} {% else %}
+        <div class="empty">No emails yet — use the Generate button above.</div>
+        {% endif %}
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container muted">
+        PhishGuard — demo built for hackathon • Generated for awareness only
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
